@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <style>
+        body {
+            background: linear-gradient(to right, green, #7acf5e);
+        }
+
+        .main {
+            box-shadow: black;
+            background: white;
+            width: 60%;
+            margin-left: 20%;
+            margin-top: 100px;
+            padding: 50px;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: center;
+        {#border-bottom: 1px solid #0e0d0b;#}
+        }
+
+        .main-body-detail {
+            margin: 20px;
+            display: flex;
+        {#border-bottom: 1px solid #b6b6b8;#}
+        }
+
+        .main-body-detail span{
+            width: 300px;
+        {#border-bottom: 1px solid #b6b6b8;#}
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="main">
+        <div class="main-header">
+            <input class="form-control" name="content" id="inputContent" placeholder="Nội dung ...">
+            <input class="form-control" name="id" id="inputId" style="display: none">
+            <button class="btn btn-success btnAdd ml-1">Thêm</button>
+            <button class="btn btn-info btnEditMain ml-1">Sửa</button>
+        </div>
+        <div class="main-body">
+        </div>
+    </div>
+
+</div>
+</body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script type="text/javascript" >
+    function buildList() {
+        var listContent = document.getElementsByClassName("main-body")[0]
+        var url = 'http://192.168.1.246:8888/api/task-list?format=json'
+        var html = ''
+        fetch(url)
+            .then(response => response.json())
+            .then(function (data) {
+                listContent.innerHTML = ''
+                for (var i = 0; i < data.length; i++) {
+                    item = '<div class="main-body-detail">\n' +
+                        '                <span class="m-2">' + data[i].content + '</span>\n' +
+                        '                <button class="btn btn-outline-info m-1 btnEdit" data-id="'+ data[i].id +'"  data-content="'+data[i].content+'">Sửa lại</button>\n' +
+                        '                <button class="btn btn-outline-danger m-1 btnDelete" data-id="'+ data[i].id +'"  data-content="'+data[i].content+'">Xóa</button>\n' +
+                        '            </div>'
+                    listContent.innerHTML += item
+
+                }
+
+                var sliders = [].slice.call(document.getElementsByClassName('btnEdit'));
+                var sliders2 = [].slice.call(document.getElementsByClassName('btnDelete'));
+                sliders.forEach(function (element, index) {
+                    element.addEventListener("click", function () {
+                        var cols = document.getElementsByClassName('main-body-detail');
+                        for (i = 0; i < cols.length; i++) {
+                            cols[i].style.backgroundColor = 'white';
+                        }
+                        document.getElementsByClassName('main-body-detail')[index].style.background = 'aliceblue'
+                        document.getElementById('inputContent').value = this.getAttribute("data-content");
+                        document.getElementById('inputId').value = this.getAttribute("data-id");
+                    });
+
+                });
+                sliders2.forEach(function (element, index) {
+                    element.addEventListener("click", function () {
+                        var cols = document.getElementsByClassName('main-body-detail');
+                        for (i = 0; i < cols.length; i++) {
+                            cols[i].style.backgroundColor = 'white';
+                        }
+                        document.getElementsByClassName('main-body-detail')[index].style.background = 'aliceblue'
+                        document.getElementById('inputContent').value = this.getAttribute("data-content");
+                        document.getElementById('inputId').value = this.getAttribute("data-id");
+
+                        var url = 'http://192.168.1.246:8888/api/task/delete/' + document.getElementById('inputId').value
+                        fetch(url, {
+                            method: 'DELETE', // or 'PUT'
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            //body: JSON.stringify({
+                              //  'content': document.getElementById('inputContent').value
+                            //}),
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                document.getElementById('inputContent').value = ''
+                                buildList()
+                            })
+                            .catch((error) => {
+                                console.error('Error:', error);
+                            });
+                    });
+
+                });
+            })
+    }
+
+    buildList()
+
+    document.getElementsByClassName('btnAdd')[0].addEventListener('click', function datas() {
+        if (document.getElementById('inputContent').value != '') {
+            fetch('http://192.168.1.246:8888/api/task/create', {
+                method: 'POST', // or 'PUT'
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'content': document.getElementById('inputContent').value
+                }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('inputContent').value = ''
+                    console.log('Success:', data);
+                    buildList()
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        } else {
+
+        }
+    })
+
+    document.getElementsByClassName('btnEditMain')[0].addEventListener('click', function datas() {
+        if (document.getElementById('inputContent').value != '') {
+            var url = 'http://192.168.1.246:8888/api/task/update/' + document.getElementById('inputId').value
+            fetch(url, {
+                method: 'PUT', // or 'PUT'
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'content': document.getElementById('inputContent').value
+                }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('inputContent').value = ''
+                    buildList()
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        } else {
+
+        }
+    })
+
+
+
+</script>
+</html>
